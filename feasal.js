@@ -56,32 +56,72 @@
         // since this is returns a NodeList which is a host object.
         // This causes a break in IE.
         //return [].slice.call(document.getElementsByTagName(tagname));
-    };
-
-    var highlightiframes = function() {
-        //still to do
-        //make this work and maybe work out what type of iframes?    
-
-
-        var nodes = $tagname('iframe');
-
-        for (var i=0; i<nodes.length; i++) {
-            nodes[i].border = 'red 1px dotted';
-        }
     };    
 
-    function iframeCheck() {
+    var mediaQ = {
+        get : function() {
+            var sts = document.styleSheets;
+            var result = [];
+            for (var i = 0; i < sts.length; i++) {
+                var st = sts[i];
+                if (typeof sts[i].href != undefined && sts[i].href) {
+                    console.info(sts[i].href.match(/\w*\.css/));
+                    mediaQ.parseExternalCSS(sts[i].href.match(/\w*\.css/))
+                }
+            }
+        },
+        parseExternalCSS : function parseExternalCSS(url) {
+            // Incrementing counter value
+            this.externalCSSsToParse++;
 
-        var nodes = $tagname('iframe');
-        if(nodes.length>0)
-          prometheus.htmlcontent += '<li style="width: 100%; margin: 10px; font-weight bold; font-size: 14px; color: red;" onclick="javascript:iframehighlight();">'+nodes.length+' iframe elements found </li>';
+            var cssReq = new XMLHttpRequest;
+            cssReq.onload = function (event) {
+                var data = event.target.responseText;
+                if (data) {
+                    var mqs = data.match(/@media[\s\S]*?\{/gim);
+                    for (var i in mqs) {
+                        console.log(mqs[i]);
+                    }
+                }
+            }.bind(this);
 
+            cssReq.onerror = function (event) {
+                console.error('Error fetching css:', event.target.statusText);
+            }.bind(this);
+
+            cssReq.onloadend = function () {
+                this.externalCSSsToParse--;
+                if (this.externalCSSsToParse == 0)
+                    this.showResults();
+
+            }.bind(this);
+
+            cssReq.open('GET', url, true);
+            cssReq.send();
+        }
     };
-    iframeCheck();
 
+    mediaQ.get();
 
+    var iframes = {
+        check : function() {
+            var nodes = $tagname('iframe');
+            if(nodes.length>0)
+                prometheus.htmlcontent += '<li style="width: 100%; margin: 10px; font-weight bold; font-size: 14px; color: red;" onclick="javascript:feasal().highlightiframes();">'+nodes.length+' iframe elements found </li>';
 
-    
+        },
+        highlight : function() {
+            //still to do
+            //make this work and maybe work out what type of iframes?    
+            var nodes = $tagname('iframe');
+            for (var i=0; i<nodes.length; i++) {
+                nodes[i].border = 'red 1px dotted';
+            }
+        }
+    }
+
+    iframes.check();
+
     for (var key in prometheus.libs) {
         if (prometheus.libs[key] != "null") {
             prometheus.htmlcontent += '<li style="width: 100%; margin: 10px; font-weight bold; font-size: 14px;">';
@@ -97,9 +137,9 @@
         exitelm = document.createElement("div");
     elm.id = prometheus.id;
     exitelm.id = 'elmclose';
-    elm.setAttribute("style",'background: #F0F0F7; border-right: 1px solid #AAA5A5; height: 100%; width: 250px; position: fixed; left: 0px; z-index: 99999;');
-    exitelm.setAttribute("style", 'cursor: pointer; font-weight: bold; font-size: 20px; color: #000000; position: absolute; right: 0px; top: 0px; width: 20px; height: 20px;')
-    elm.innerHTML = '<h2 style="width: 100%; margin: 10px 0px 20px 10px; font-size: 20px;">Feasal</h2><ul style="padding: 5px; margin: 0px; list-style: none;">'+prometheus.htmlcontent+'</ul>';
+    elm.setAttribute("style",'background: rgba(26, 26, 26, 0.85); height: 100%; width: 250px; position: fixed; left: 0px; top: 0px; z-index: 99999; color: #ffffff');
+    exitelm.setAttribute("style", 'cursor: pointer; font-weight: bold; font-size: 20px; color: #ffffff; position: absolute; right: 0px; top: 0px; width: 20px; height: 20px;')
+    elm.innerHTML = '<h2 style="color: #ffffff; width: 100%; margin: 10px 0px 20px 10px; font-size: 20px;">Feasal</h2><ul style="padding: 5px; margin: 0px; list-style: none;">'+prometheus.htmlcontent+'</ul>';
     exitelm.innerHTML = "X";
     exitelm.onclick = prometheus.close;
     
@@ -111,11 +151,10 @@
     
     document.getElementById(prometheus.id).appendChild(exitelm);
 
-    feasal = {
-        highlightiframes : highlightiframes
+    window.feasal = function(){
+        return { highlightiframes : iframes.highlight }
     };
 
-    return feasal;
     
 })();    
 
