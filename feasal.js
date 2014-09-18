@@ -65,7 +65,7 @@
             for (var i = 0; i < sts.length; i++) {
                 var st = sts[i];
                 if (typeof sts[i].href != undefined && sts[i].href) {
-                    console.info(sts[i].href.match(/\w*\.css/));
+                    console.info('get stylesheets: ',sts[i].href.match(/\w*\.css/));
                     mediaQ.parseExternalCSS(sts[i].href.match(/\w*\.css/))
                 }
             }
@@ -79,8 +79,12 @@
                 var data = event.target.responseText;
                 if (data) {
                     var mqs = data.match(/@media[\s\S]*?\{/gim);
+                    if (mqs.length) {
+                        prometheus.htmlcontent += '<li style="width: 100%; margin: 10px; font-weight bold; font-size: 14px; color: #ffffff;">Media Queries found:</li>';           
+                    }
                     for (var i in mqs) {
-                        console.log(mqs[i]);
+                        console.log('parsecssfunc: ', mqs[i].toString());
+                        prometheus.htmlcontent += '<li style="width: 100%; margin: 10px; font-weight bold; font-size: 14px; color: #ffffff;">'+mqs[i].toString()+'</li>';
                     }
                 }
             }.bind(this);
